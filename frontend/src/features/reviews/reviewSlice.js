@@ -25,11 +25,23 @@ export const fetchReviewById = createAsyncThunk(
   }
 );
 
+export const toggleLikeReview = createAsyncThunk(
+  'reviews/toggleLikeReview',
+  async ({ id, action }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/reviews/${id}/like`, { action });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to toggle like');
+    }
+  }
+);
+
 const initialState = {
   items: [],
   pagination: {
     page: 1,
-    limit: 10,
+    limit: 9,
     totalCount: 0,
     totalPages: 0,
   },
@@ -70,7 +82,17 @@ const reviewSlice = createSlice({
       })
       .addCase(fetchReviews.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.data;
+        if (action.payload.pagination && action.payload.pagination.page > 1) {
+          // Append items, filtering out potential duplicates
+          const newItems = action.payload.data.filter(
+            newItem => !state.items.find(item => item._id === newItem._id && newItem._id !== undefined)
+          );
+          state.items = [...state.items, ...newItems];
+        } else {
+          // Replace items on page 1
+          state.items = action.payload.data;
+        }
+        
         if (action.payload.pagination) {
           state.pagination = { ...state.pagination, ...action.payload.pagination };
         }
@@ -91,6 +113,17 @@ const reviewSlice = createSlice({
       .addCase(fetchReviewById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // Toggle Like Review
+      .addCase(toggleLikeReview.fulfilled, (state, action) => {
+        const updatedReview = action.payload.data;
+        const index = state.items.findIndex(item => item._id === updatedReview._id);
+        if (index !== -1) {
+          state.items[index] = updatedReview;
+        }
+        if (state.currentReview?._id === updatedReview._id) {
+          state.currentReview = updatedReview;
+        }
       });
   },
 });

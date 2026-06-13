@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { applyTheme } from '../../theme';
 
 const initialState = {
   theme: localStorage.getItem('theme') || 'light',
@@ -12,20 +13,12 @@ const uiSlice = createSlice({
     toggleTheme: (state) => {
       state.theme = state.theme === 'light' ? 'dark' : 'light';
       localStorage.setItem('theme', state.theme);
-      if (state.theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      applyTheme(state.theme);
     },
     setTheme: (state, action) => {
       state.theme = action.payload;
       localStorage.setItem('theme', action.payload);
-      if (action.payload === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      applyTheme(state.theme);
     },
     toggleSidebar: (state) => {
       state.sidebarOpen = !state.sidebarOpen;
