@@ -1,19 +1,25 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { fetchCurrentUser } from './features/auth/authSlice';
+import AppRoutes from './routes/AppRoutes';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    // Check auth status on mount
+    const token = localStorage.getItem('token');
+    if (token) {
+      dispatch(fetchCurrentUser());
+    }
+  }, [dispatch]);
 
   return (
-    <>
-      
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <AppRoutes />
+    </Router>
+  );
 }
 
-export default App
+export default App;
