@@ -1,0 +1,553 @@
+{
+  "info": {
+    "name": "Meta Glasses Reviews API",
+    "description": "Complete API documentation for the Meta Glasses Reviews project.\n\n**Backend:** https://meta-glasses-reviews.onrender.com\n**Frontend:** https://meta-glasses-reviews.vercel.app\n\n## Authentication\nMost endpoints require a Bearer JWT token. Use the **Login** request — it auto-saves the token to `{{token}}` via a test script so subsequent requests work automatically.\n\n## Variables\n- `{{baseUrl}}` → `https://meta-glasses-reviews.onrender.com/api/v1`\n- `{{token}}` → Set automatically after Login",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://meta-glasses-reviews.onrender.com/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT token — auto-set after Login"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "description": "User registration, login, and profile endpoints.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user. Returns a JWT token on success.\n\n**Validation:**\n- `name`: required, trimmed\n- `email`: must be a valid email\n- `password`: minimum 6 characters\n\n**Default role:** `user`"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  console.log('✅ Token saved to collection variable');",
+                  "} else {",
+                  "  console.log('❌ No token in response');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with credentials. The test script **automatically saves** the returned JWT to `{{token}}` so all authenticated requests work without manual copy-paste."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Returns the currently authenticated user's data decoded from the JWT token.\n\n**Auth required:** Yes"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📝 Reviews",
+      "description": "CRUD operations for reviews. Public endpoints don't require auth.",
+      "item": [
+        {
+          "name": "Get All Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reviews?page=1&limit=9",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Page number (default: 1)" },
+                { "key": "limit", "value": "9", "description": "Items per page (default: 9)" },
+                { "key": "search", "value": "glasses", "description": "Full-text search on title and review fields", "disabled": true },
+                { "key": "rating", "value": "5", "description": "Filter by exact star rating (1–5)", "disabled": true },
+                { "key": "ratingMin", "value": "3", "description": "Minimum star rating", "disabled": true },
+                { "key": "ratingMax", "value": "5", "description": "Maximum star rating", "disabled": true },
+                { "key": "country", "value": "US", "description": "Filter by country (case-insensitive regex match)", "disabled": true },
+                { "key": "verifiedPurchase", "value": "true", "description": "true = verified only, false = unverified only", "disabled": true },
+                { "key": "sentiment", "value": "1", "description": "1 = positive, 0 = negative", "disabled": true },
+                { "key": "sortBy", "value": "date", "description": "Field to sort by (e.g. date, rating, helpfulness_score)", "disabled": true },
+                { "key": "order", "value": "desc", "description": "Sort order: asc or desc", "disabled": true }
+              ]
+            },
+            "description": "Fetches a paginated, filterable list of reviews.\n\n**Auth required:** No (public)\n\n**Supports:**\n- Full-text search on `title` and `review`\n- Filters: `rating`, `ratingMin/Max`, `country`, `verifiedPurchase`, `sentiment`\n- Sorting: any field, asc/desc\n- Pagination: `page` & `limit`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Review",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", ":id"],
+              "variable": [
+                { "key": "id", "value": "REVIEW_ID_HERE", "description": "The reviewID string (not MongoDB _id)" }
+              ]
+            },
+            "description": "Fetch a single review by its `reviewID` field.\n\n**Auth required:** No\n\n> Note: `:id` refers to the `reviewID` field in the document, **not** the MongoDB `_id`."
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Like / Helpful",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"like\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", ":id", "like"],
+              "variable": [
+                { "key": "id", "value": "REVIEW_ID_HERE", "description": "The reviewID of the review to like/unlike" }
+              ]
+            },
+            "description": "Increment or decrement the `helpful_aug` (helpful vote count) on a review.\n\n**Auth required:** Yes\n\n**Body:**\n- `action`: `\"like\"` → increments count, `\"unlike\"` → decrements count\n\n> The backend does not track who liked what — only the total count changes."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Review (Admin only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewID\": \"unique-review-id-123\",\n  \"name\": \"Jane Smith\",\n  \"title\": \"Amazing glasses!\",\n  \"review\": \"These are the best smart glasses I have ever tried. The audio quality is superb and they are very comfortable to wear all day.\",\n  \"rating\": 5,\n  \"country\": \"US\",\n  \"verifiedPurchase\": true,\n  \"is_positive_review\": true,\n  \"date\": \"2024-01-15\",\n  \"helpful\": 10,\n  \"reviewImage\": \"\",\n  \"profile\": \"\",\n  \"reviewLink\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews"]
+            },
+            "description": "Create a new review document in the database.\n\n**Auth required:** Yes — Admin role only\n\n**Required fields:**\n- `reviewID`: unique string identifier\n\n**Optional fields:**\n- `name`, `title`, `review`, `rating` (1–5), `country`, `verifiedPurchase`, `is_positive_review`, `date`, `helpful`, `helpfulness_score`, `reviewImage`, `profile`, `reviewLink`"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Review (Admin only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated title here\",\n  \"rating\": 4,\n  \"is_positive_review\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", ":id"],
+              "variable": [
+                { "key": "id", "value": "REVIEW_ID_HERE", "description": "The reviewID of the review to update" }
+              ]
+            },
+            "description": "Partially update a review. Only provided fields are updated.\n\n**Auth required:** Yes — Admin role only\n\n> Lookup is by `reviewID`, not MongoDB `_id`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Review (Admin only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", ":id"],
+              "variable": [
+                { "key": "id", "value": "REVIEW_ID_HERE", "description": "The reviewID of the review to delete" }
+              ]
+            },
+            "description": "Permanently delete a review from the database.\n\n**Auth required:** Yes — Admin role only"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 Stats",
+      "description": "Analytics and aggregated statistics. All endpoints are public.",
+      "item": [
+        {
+          "name": "Average Rating",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats/average-rating",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats", "average-rating"]
+            },
+            "description": "Returns the average star rating across all reviews in the database."
+          },
+          "response": []
+        },
+        {
+          "name": "Rating Distribution",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats/rating-distribution",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats", "rating-distribution"]
+            },
+            "description": "Returns the count of reviews grouped by each star rating (1 through 5). Useful for bar/pie charts."
+          },
+          "response": []
+        },
+        {
+          "name": "Top Reviewers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats/top-reviewers",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats", "top-reviewers"]
+            },
+            "description": "Returns a list of reviewer names sorted by number of reviews submitted."
+          },
+          "response": []
+        },
+        {
+          "name": "Monthly Average Ratings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats/monthly-average",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats", "monthly-average"]
+            },
+            "description": "Returns average ratings grouped by month. Used for the trend line chart on the dashboard."
+          },
+          "response": []
+        },
+        {
+          "name": "Sentiment Breakdown",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats/sentiment",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats", "sentiment"]
+            },
+            "description": "Returns the total count of positive (`is_positive_review: true`) vs negative reviews."
+          },
+          "response": []
+        },
+        {
+          "name": "Country Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats/country",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats", "country"]
+            },
+            "description": "Returns review count and average rating grouped by country. Used for the geographic distribution chart."
+          },
+          "response": []
+        },
+        {
+          "name": "Most Helpful Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats/most-helpful",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats", "most-helpful"]
+            },
+            "description": "Returns the top reviews sorted by `helpfulness_score` in descending order."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👤 Users — My Account",
+      "description": "Endpoints for the currently logged-in user to manage their own profile and saved reviews.",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Returns the full profile of the currently authenticated user.\n\n**Auth required:** Yes"
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Display Name\",\n  \"avatar\": \"https://example.com/my-avatar.png\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Update the current user's `name` and/or `avatar` URL.\n\n**Auth required:** Yes\n\n**Updatable fields:** `name`, `avatar`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Saved Reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/saved",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me", "saved"]
+            },
+            "description": "Fetches all reviews that the current user has bookmarked/saved. Returns full review objects.\n\n**Auth required:** Yes"
+          },
+          "response": []
+        },
+        {
+          "name": "Save a Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewId\": \"REVIEW_ID_HERE\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me/saved",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me", "saved"]
+            },
+            "description": "Bookmark/save a review to the current user's saved list. Uses `$addToSet` to avoid duplicates.\n\n**Auth required:** Yes\n\n**Body:** `reviewId` — the `reviewID` of the review to save"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Saved Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/saved/:reviewId",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me", "saved", ":reviewId"],
+              "variable": [
+                { "key": "reviewId", "value": "REVIEW_ID_HERE", "description": "The reviewID to remove from saved list" }
+              ]
+            },
+            "description": "Remove a review from the current user's saved/bookmarked list.\n\n**Auth required:** Yes"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👑 Users — Admin Management",
+      "description": "Admin-only endpoints for managing all users.",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Page number" },
+                { "key": "limit", "value": "10", "description": "Users per page" },
+                { "key": "role", "value": "user", "description": "Filter by role: user or admin", "disabled": true }
+              ]
+            },
+            "description": "Fetch a paginated list of all users in the system.\n\n**Auth required:** Yes — Admin role only\n\n**Query params:**\n- `page`, `limit`: pagination\n- `role`: filter by `user` or `admin`"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"role\": \"user\",\n  \"avatar\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", ":id"],
+              "variable": [
+                { "key": "id", "value": "MONGO_USER_ID", "description": "MongoDB _id of the user" }
+              ]
+            },
+            "description": "Update any user's `name`, `role`, or `avatar`.\n\n**Auth required:** Yes — Admin role only\n\n> Note: `:id` here is the MongoDB `_id`, **not** `reviewID`.\n\n**Updatable fields:** `name`, `role` (`user`/`admin`), `avatar`"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", ":id"],
+              "variable": [
+                { "key": "id", "value": "MONGO_USER_ID", "description": "MongoDB _id of the user to delete" }
+              ]
+            },
+            "description": "Permanently delete a user by their MongoDB `_id`.\n\n**Auth required:** Yes — Admin role only\n\n⚠️ This action is irreversible."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health",
+      "description": "Server health and status endpoints.",
+      "item": [
+        {
+          "name": "Base Route",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://meta-glasses-reviews.onrender.com",
+              "raw": "https://meta-glasses-reviews.onrender.com"
+            },
+            "description": "Root endpoint of the backend. Returns a welcome message. Useful for checking if the Render service is awake."
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Returns server status and current timestamp. Use this to verify the API is up and running."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
