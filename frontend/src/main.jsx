@@ -2,48 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { HelmetProvider } from 'react-helmet-async';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline } from '@mui/material';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
 import App from './App.jsx';
 import store from './store';
-
-// Basic MUI theme to match Tailwind
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#0ea5e9', // brand-500
-    },
-    secondary: {
-      main: '#64748b',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "system-ui", "-apple-system", "sans-serif"',
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          borderRadius: '0.375rem',
-        },
-      },
-    },
-  },
-});
-
-// Initialize theme from localStorage before render
-const initTheme = () => {
-  if (
-    localStorage.theme === 'dark' ||
-    (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  ) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-};
+import { muiTheme, initTheme } from './theme';
 
 initTheme();
 
@@ -51,7 +15,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
       <HelmetProvider>
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={muiTheme}>
           <CssBaseline />
           <App />
           <Toaster 
